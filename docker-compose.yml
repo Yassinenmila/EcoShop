@@ -1,0 +1,78 @@
+services:
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: app_echoshop
+    working_dir: /var/www
+    volumes:
+      - ./backend/src:/var/www
+    depends_on:
+      - db
+    networks:
+      - laravel
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: echoshop
+    working_dir: /var/www
+    volumes:
+      - ./frontend/app:/var/www
+    ports:
+      - "5173:5173"
+    networks:
+      - laravel
+
+  web:
+    image: nginx:alpine
+    container_name: nginx_echoshop
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - laravel
+
+  db:
+    image: postgres:17
+    container_name: db_echoshop
+    environment:
+      POSTGRES_DB: laravel
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - laravel
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_echoshop
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - laravel
+
+networks:
+  laravel:
+
+volumes:
+  pgdata:

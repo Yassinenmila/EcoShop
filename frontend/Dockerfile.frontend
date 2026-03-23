@@ -1,0 +1,20 @@
+# frontend/Dockerfile
+FROM node:20-alpine
+
+# Installer bash et git
+RUN apk add --no-cache bash git
+
+# Utiliser l'utilisateur par défaut de l'image Node (UID/GID 1000)
+WORKDIR /var/www
+
+# Copier le contenu du dossier frontend (s'il y a quelque chose)
+COPY ./ /var/www
+
+# Installer les dépendances si package.json existe
+RUN if [ -f package.json ]; then npm install; fi
+
+# Exposer le port Vite
+EXPOSE 5173
+
+# Lancer Vite en mode dev
+CMD ["sh", "-c", "if [ -f package.json ]; then npm run dev -- --host; else tail -f /dev/null; fi"]

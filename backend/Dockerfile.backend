@@ -1,0 +1,27 @@
+# backend/Dockerfile
+FROM php:8.4-fpm
+
+ARG UID=1000
+ARG GID=1000
+
+RUN apt-get update && apt-get install -y \
+    git unzip libpq-dev libzip-dev zip curl \
+    && docker-php-ext-install pdo pdo_pgsql zip bcmath
+
+RUN groupadd -g ${GID} appgroup \
+    && useradd -u ${UID} -ms /bin/bash -g appgroup appuser
+
+USER appuser
+WORKDIR /var/www
+
+# Installer Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Copier le code Laravel si présent
+COPY ./ /var/www
+
+# Installer les dépendances Laravel si composer.json existe
+RUN if [ -f composer.json ]; then composer install --no-interaction --prefer-dist --optimize-autoloader; fi
+
+EXPOSE 9000
+CMD ["php-fpm"]
